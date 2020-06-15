@@ -42,6 +42,16 @@ func TestOf(t *testing.T) {
 			in:   []bool{false, true, false, false, true},
 			want: []bool{false, false, false, true, true},
 		},
+		{
+			name: "complex64",
+			in:   []complex64{complex(1, 2), complex(2, 1), complex(1, 1), complex(2, 2)},
+			want: []complex64{complex(1, 1), complex(1, 2), complex(2, 1), complex(2, 2)},
+		},
+		{
+			name: "complex128",
+			in:   []complex128{complex(1, 2), complex(2, 1), complex(1, 1), complex(2, 2)},
+			want: []complex128{complex(1, 1), complex(1, 2), complex(2, 1), complex(2, 2)},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -61,12 +61,16 @@ func forAddr(addr0 unsafe.Pointer, size, off uintptr, t reflect.Type, optEq less
 		makeLess = lessUint32
 	case reflect.Uint64:
 		makeLess = lessUint64
+	case reflect.Uintptr:
+		makeLess = lessUintptr
 	case reflect.Float32:
 		makeLess = lessFloat32
 	case reflect.Float64:
 		makeLess = lessFloat64
-	case reflect.Uintptr:
-		makeLess = lessUintptr
+	case reflect.Complex64:
+		makeLess = lessComplex64
+	case reflect.Complex128:
+		makeLess = lessComplex128
 	case reflect.String:
 		makeLess = lessString
 	case reflect.Struct:
@@ -260,6 +264,19 @@ func lessUintptr(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
 	}
 }
 
+func lessFloat32(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
+	return func(i, j int) bool {
+		va, vb := *(*float32)(addr(addr0, size, off, i)), *(*float32)(addr(addr0, size, off, j))
+		if va == vb {
+			if optEq != nil {
+				return optEq(i, j)
+			}
+			return false
+		}
+		return va < vb || isNaN32(va) && !isNaN32(vb)
+	}
+}
+
 func lessFloat64(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
 	return func(i, j int) bool {
 		va, vb := *(*float64)(addr(addr0, size, off, i)), *(*float64)(addr(addr0, size, off, j))
@@ -273,17 +290,12 @@ func lessFloat64(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
 	}
 }
 
-func lessFloat32(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
-	return func(i, j int) bool {
-		va, vb := *(*float32)(addr(addr0, size, off, i)), *(*float32)(addr(addr0, size, off, j))
-		if va == vb {
-			if optEq != nil {
-				return optEq(i, j)
-			}
-			return false
-		}
-		return va < vb || isNaN32(va) && !isNaN32(vb)
-	}
+func lessComplex64(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
+	return lessFloat32(addr0, size, off, lessFloat32(addr0, size, off+4, optEq))
+}
+
+func lessComplex128(addr0 unsafe.Pointer, size, off uintptr, optEq less) less {
+	return lessFloat64(addr0, size, off, lessFloat64(addr0, size, off+8, optEq))
 }
 
 func isNaN32(f float32) bool { return f != f }

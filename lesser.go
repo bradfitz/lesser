@@ -26,7 +26,7 @@ import (
 //  - pointers, chan, func and map compare by
 //    machine address
 //  - structs compare each field in turn
-//  - arrays compare each element in turn.
+//  - arrays compare each non-blank element in turn
 //
 // Performance should be comparable to writing a native sort.Slice
 // function.
@@ -96,6 +96,9 @@ func forAddr(addr0 unsafe.Pointer, size, off uintptr, t reflect.Type, optEq less
 		ret := optEq
 		for i := t.NumField() - 1; i >= 0; i-- {
 			sf := t.Field(i)
+			if sf.Name == "_" {
+				continue
+			}
 			ret = forAddr(addr0, size, sf.Offset, sf.Type, ret)
 		}
 		return ret

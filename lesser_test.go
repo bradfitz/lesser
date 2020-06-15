@@ -10,11 +10,18 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"unsafe"
 )
 
 type TStringInt struct {
 	S string
 	I int
+}
+
+type blankStruct struct {
+	A int
+	_ int
+	B int
 }
 
 func TestOf(t *testing.T) {
@@ -33,7 +40,7 @@ func TestOf(t *testing.T) {
 			want: []string{"bar", "baz", "foo", "quux"},
 		},
 		{
-			name: "string_int",
+			name: "struct",
 			in:   []TStringInt{{"a", 2}, {"b", 2}, {"b", 1}, {"a", 1}},
 			want: []TStringInt{{"a", 1}, {"a", 2}, {"b", 1}, {"b", 2}},
 		},
@@ -121,5 +128,18 @@ func BenchmarkStructSort_lesser_reuse(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		copy(buf, unsorted)
 		sort.Slice(buf, lesser)
+	}
+}
+
+func TestStructBlank(t *testing.T) {
+	type Blank struct {
+		A int32
+		_ int32
+		B int32
+	}
+	a := [6]int32{1, 0, 5, 1, 99, 2}
+	less := forAddr(unsafe.Pointer(&a[0]), 12, 0, reflect.TypeOf(Blank{}), nil)
+	if less(0, 1) {
+		t.Errorf("should not be less")
 	}
 }

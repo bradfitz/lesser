@@ -21,7 +21,6 @@ import (
 //  - bool compares false before true
 //  - ints, floats, and strings order by <
 //  - NaN compares less than non-NaN floats
-//  - bool compares false before true
 //  - complex compares real, then imag
 //  - pointers, chan, func and map compare by
 //    machine address

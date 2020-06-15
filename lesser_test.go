@@ -52,6 +52,11 @@ func TestOf(t *testing.T) {
 			in:   []complex128{complex(1, 2), complex(2, 1), complex(1, 1), complex(2, 2)},
 			want: []complex128{complex(1, 1), complex(1, 2), complex(2, 1), complex(2, 2)},
 		},
+		{
+			name: "array",
+			in:   [][3]int{{3, 2, 1}, {2, 3, 1}, {1, 3, 2}, {1, 1, 2}, {1, 1, 1}},
+			want: [][3]int{{1, 1, 1}, {1, 1, 2}, {1, 3, 2}, {2, 3, 1}, {3, 2, 1}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

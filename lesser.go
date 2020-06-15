@@ -16,9 +16,17 @@ import (
 //
 // The slice argument must be a slice.
 //
-// For bool, false is less than true.
-// For floats, NaN is less than not NaN.
-// For structs, fields are compared in declaration order.
+// The ordering rules are more general than with Go's < operator:
+//
+//  - bool compares false before true
+//  - ints, floats, and strings order by <
+//  - NaN compares less than non-NaN floats
+//  - bool compares false before true
+//  - complex compares real, then imag
+//  - pointers, chan, func and map compare by
+//    machine address
+//  - structs compare each field in turn
+//  - arrays compare each element in turn.
 //
 // Performance should be comparable to writing a native sort.Slice
 // function.
@@ -71,17 +79,30 @@ func forAddr(addr0 unsafe.Pointer, size, off uintptr, t reflect.Type, optEq less
 		makeLess = lessComplex64
 	case reflect.Complex128:
 		makeLess = lessComplex128
+	case reflect.Array:
+		ret := optEq
+		et := t.Elem()
+		for i := t.Len() - 1; i >= 0; i-- {
+			ret = forAddr(addr0, size, et.Size()*uintptr(i), et, ret)
+		}
+		return ret
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer:
+		makeLess = lessUintptr
 	case reflect.String:
 		makeLess = lessString
 	case reflect.Struct:
 		// Walk fields from the back, building up the
 		// tie-breaker chain in reverse.
-		var ret less
+		ret := optEq
 		for i := t.NumField() - 1; i >= 0; i-- {
 			sf := t.Field(i)
 			ret = forAddr(addr0, size, sf.Offset, sf.Type, ret)
 		}
 		return ret
+	case reflect.Interface:
+		// TODO
+	case reflect.Slice:
+		// TODO
 	}
 	if makeLess == nil {
 		panic(fmt.Sprintf("un-sortable type %v (kind %v)", t, t.Kind()))
